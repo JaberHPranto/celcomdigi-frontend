@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { GeminiLiveClient } from "@/lib/gemini-live";
+import { GeminiLiveClient, TranscriptEvent } from "@/lib/gemini-live";
 import { useRouter } from "next/navigation";
 
 export function useGeminiLive() {
@@ -10,12 +10,54 @@ export function useGeminiLive() {
   const [volume, setVolume] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
+  const [userCaption, setUserCaption] = useState("");
+  const [aiCaption, setAiCaption] = useState("");
   const clientRef = useRef<GeminiLiveClient | null>(null);
+  const userCaptionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const aiCaptionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
+
+  const handleTranscript = useCallback((event: TranscriptEvent) => {
+    if (event.source === "user") {
+      // Clear any pending timeout
+      if (userCaptionTimeoutRef.current) {
+        clearTimeout(userCaptionTimeoutRef.current);
+      }
+
+      if (event.isFinal) {
+        // Clear user caption when turn is done
+        setUserCaption("");
+      } else {
+        // Accumulate user speech
+        setUserCaption((prev) => prev + event.text);
+        // Auto-clear after 2 seconds of no new input
+        userCaptionTimeoutRef.current = setTimeout(() => {
+          setUserCaption("");
+        }, 2000);
+      }
+    } else if (event.source === "ai") {
+      // Clear any pending timeout
+      if (aiCaptionTimeoutRef.current) {
+        clearTimeout(aiCaptionTimeoutRef.current);
+      }
+
+      if (event.isFinal) {
+        // Clear AI caption when turn is complete
+        setTimeout(() => {
+          setAiCaption("");
+        }, 1000); // Small delay so user can read the last bit
+      } else {
+        // Accumulate AI speech
+        setAiCaption((prev) => prev + event.text);
+      }
+    }
+  }, []);
 
   const connect = useCallback(async () => {
     setError(null);
     setCaption("");
+    setUserCaption("");
+    setAiCaption("");
     try {
       // In a real app, fetch a short-lived token here
       // For this demo, we'll fetch the key from a server action or API
@@ -42,7 +84,8 @@ export function useGeminiLive() {
         },
         (vol) => {
           setVolume(vol);
-        }
+        },
+        handleTranscript
       );
 
       await clientRef.current.connect();
@@ -52,16 +95,25 @@ export function useGeminiLive() {
       setError("Failed to connect to voice service");
       setIsConnected(false);
     }
-  }, [router]);
+  }, [router, handleTranscript]);
 
   const disconnect = useCallback(() => {
     if (clientRef.current) {
       clientRef.current.stop();
       clientRef.current = null;
     }
+    // Clear any pending timeouts
+    if (userCaptionTimeoutRef.current) {
+      clearTimeout(userCaptionTimeoutRef.current);
+    }
+    if (aiCaptionTimeoutRef.current) {
+      clearTimeout(aiCaptionTimeoutRef.current);
+    }
     setIsConnected(false);
     setIsSpeaking(false);
     setCaption("");
+    setUserCaption("");
+    setAiCaption("");
   }, []);
 
   useEffect(() => {
@@ -76,6 +128,8 @@ export function useGeminiLive() {
     volume,
     error,
     caption,
+    userCaption,
+    aiCaption,
     connect,
     disconnect,
   };

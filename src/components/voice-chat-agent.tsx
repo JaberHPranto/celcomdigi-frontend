@@ -35,7 +35,16 @@ const HISTORY_CHIPS = [
 export function VoiceChatAgent() {
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<"voice" | "chat">("voice");
-  const { isConnected, error, connect, disconnect, volume, caption } = useGeminiLive();
+  const {
+    isConnected,
+    error,
+    connect,
+    disconnect,
+    volume,
+    caption,
+    userCaption,
+    aiCaption,
+  } = useGeminiLive();
 
   // Handle connection based on open state and mode
   useEffect(() => {
@@ -72,10 +81,15 @@ export function VoiceChatAgent() {
         if (e.target === e.currentTarget) setIsOpen(false);
       }}
     >
-      <div className={cn("relative flex h-full w-full flex-col overflow-hidden bg-white sm:w-[400px] sm:rounded-4xl sm:shadow-2xl transition-all duration-300", {
-        "h-auto": mode === "voice",
-        "h-[650px]": mode === "chat"
-      })}>
+      <div
+        className={cn(
+          "relative flex h-full w-full flex-col overflow-hidden bg-white sm:w-[400px] sm:rounded-4xl sm:shadow-2xl transition-all duration-300",
+          {
+            "h-auto": mode === "voice",
+            "h-[650px]": mode === "chat",
+          }
+        )}
+      >
         {mode === "voice" ? (
           <VoiceInterface
             onSwitchToChat={() => setMode("chat")}
@@ -84,6 +98,8 @@ export function VoiceChatAgent() {
             error={error}
             volume={volume}
             caption={caption}
+            userCaption={userCaption}
+            aiCaption={aiCaption}
           />
         ) : (
           <ChatInterface
@@ -103,6 +119,8 @@ function VoiceInterface({
   error,
   volume = 0,
   caption = "",
+  userCaption = "",
+  aiCaption = "",
 }: {
   onSwitchToChat: () => void;
   onClose: () => void;
@@ -110,6 +128,8 @@ function VoiceInterface({
   error: string | null;
   volume?: number;
   caption?: string;
+  userCaption?: string;
+  aiCaption?: string;
 }) {
   return (
     <>
@@ -174,13 +194,35 @@ function VoiceInterface({
           </p>
 
           {/* Live Caption Display */}
-          {caption && (
-            <div className="my-6 max-w-md mx-auto">
-              <div className="rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 p-4 shadow-sm border border-blue-100">
-                <p className="text-sm text-gray-700 leading-relaxed">
-                  {caption}
-                </p>
-              </div>
+          {(userCaption || aiCaption) && (
+            <div className="my-6 max-w-md mx-auto space-y-3">
+              {/* User Caption */}
+              {userCaption && (
+                <div className="rounded-2xl bg-gray-100 p-4 shadow-sm border border-gray-200">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-medium text-gray-500">
+                      You
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-700 leading-relaxed">
+                    {userCaption}
+                  </p>
+                </div>
+              )}
+
+              {/* AI Caption */}
+              {aiCaption && (
+                <div className="rounded-2xl bg-linear-to-br from-blue-50 to-indigo-50 p-4 shadow-sm border border-blue-100">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-medium text-blue-600">
+                      AI
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-700 leading-relaxed">
+                    {aiCaption}
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>
