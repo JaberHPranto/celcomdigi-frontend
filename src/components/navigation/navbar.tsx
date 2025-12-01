@@ -17,6 +17,7 @@ import {
   X,
   ArrowUpRight,
 } from "lucide-react";
+import Image from "next/image";
 
 const BRAND_NAME = "CelcomDigi";
 
@@ -41,14 +42,20 @@ export function Navbar() {
   const desktopNav = useMemo(() => navSections, []);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/60 bg-white/90 shadow-sm backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#001871] shadow-sm backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
         <div className="flex items-center gap-6">
           <Link
             href="/"
-            className="text-lg font-semibold tracking-tight text-primary"
+            className="flex items-center"
           >
-            {BRAND_NAME}
+            <Image
+              src="https://cdn.prod.website-files.com/637c596725cb8b7f82fe360b/6548631227a35c7c91ebbeea_CelcomDigi_Logo_Inverted.svg"
+              alt={BRAND_NAME}
+              width={130}
+              height={52}
+            />
+
           </Link>
           <nav className="hidden items-center gap-2 lg:flex">
             {desktopNav.map((section) => (
@@ -75,8 +82,8 @@ export function Navbar() {
                   className={cn(
                     "flex items-center gap-1 rounded-full px-3 py-2 text-sm font-medium transition",
                     activeDesktopMenu === section.label
-                      ? "bg-primary/10 text-primary"
-                      : "text-foreground/80 hover:bg-primary/10 hover:text-primary"
+                      ? "bg-white/10 text-white"
+                      : "text-white/80 hover:bg-white/10 hover:text-white"
                   )}
                   aria-expanded={activeDesktopMenu === section.label}
                   aria-haspopup="true"
@@ -107,7 +114,7 @@ export function Navbar() {
               <Link
                 key={link.label}
                 href={link.href}
-                className="rounded-full px-3 py-2 text-sm font-medium text-foreground/80 transition hover:bg-primary/10 hover:text-primary"
+                className="rounded-full px-3 py-2 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white"
               >
                 {link.label}
               </Link>
@@ -117,14 +124,14 @@ export function Navbar() {
         <div className="flex items-center gap-3">
           <Link
             href="https://shop.celcomdigi.com/home"
-            className="hidden items-center gap-1 rounded-full border border-primary/40 px-3 py-2 text-sm font-semibold text-primary transition hover:bg-primary hover:text-white lg:flex"
+            className="hidden items-center gap-1 rounded-full border border-white/40 px-3 py-2 text-sm font-semibold text-white transition hover:bg-white hover:text-[#001871] lg:flex"
           >
             Shop
             <ArrowUpRight className="h-4 w-4" />
           </Link>
           <button
             type="button"
-            className="hidden items-center gap-1 rounded-full border border-border/80 px-3 py-2 text-sm text-foreground/80 transition hover:bg-muted lg:flex"
+            className="hidden items-center gap-1 rounded-full border border-white/40 px-3 py-2 text-sm text-white/80 transition hover:bg-white/10 hover:text-white lg:flex"
           >
             <Globe className="h-4 w-4" /> EN
             <ChevronDown className="h-4 w-4" />
@@ -132,7 +139,7 @@ export function Navbar() {
           <button
             type="button"
             aria-label="Toggle navigation"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border/80 text-foreground/80 transition hover:bg-muted lg:hidden"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/40 text-white/80 transition hover:bg-white/10 hover:text-white lg:hidden"
             onClick={() => setMobileOpen((prev) => !prev)}
           >
             {mobileOpen ? (

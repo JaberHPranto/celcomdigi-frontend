@@ -29,13 +29,13 @@ const HISTORY_CHIPS = [
   "What prepaid datasim plan available?",
   "What 5G plans are available?",
   "How much does roaming cost?",
-  "What safety features does CelcomDigi offer?",
+  "Can you tell me about the Home Fibre plan? ",
 ];
 
 export function VoiceChatAgent() {
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<"voice" | "chat">("voice");
-  const { isConnected, error, connect, disconnect, volume } = useGeminiLive();
+  const { isConnected, error, connect, disconnect, volume, caption } = useGeminiLive();
 
   // Handle connection based on open state and mode
   useEffect(() => {
@@ -72,7 +72,10 @@ export function VoiceChatAgent() {
         if (e.target === e.currentTarget) setIsOpen(false);
       }}
     >
-      <div className="relative flex h-full w-full flex-col overflow-hidden bg-white sm:h-[630px] sm:w-[400px] sm:rounded-4xl sm:shadow-2xl transition-all duration-300">
+      <div className={cn("relative flex h-full w-full flex-col overflow-hidden bg-white sm:w-[400px] sm:rounded-4xl sm:shadow-2xl transition-all duration-300", {
+        "h-auto": mode === "voice",
+        "h-[650px]": mode === "chat"
+      })}>
         {mode === "voice" ? (
           <VoiceInterface
             onSwitchToChat={() => setMode("chat")}
@@ -80,6 +83,7 @@ export function VoiceChatAgent() {
             isListening={isConnected}
             error={error}
             volume={volume}
+            caption={caption}
           />
         ) : (
           <ChatInterface
@@ -98,12 +102,14 @@ function VoiceInterface({
   isListening,
   error,
   volume = 0,
+  caption = "",
 }: {
   onSwitchToChat: () => void;
   onClose: () => void;
   isListening: boolean;
   error: string | null;
   volume?: number;
+  caption?: string;
 }) {
   return (
     <>
@@ -166,6 +172,17 @@ function VoiceInterface({
           >
             {error ? error : isListening ? "listening..." : "Connecting..."}
           </p>
+
+          {/* Live Caption Display */}
+          {caption && (
+            <div className="my-6 max-w-md mx-auto">
+              <div className="rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 p-4 shadow-sm border border-blue-100">
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  {caption}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

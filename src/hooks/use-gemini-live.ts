@@ -9,11 +9,13 @@ export function useGeminiLive() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [volume, setVolume] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [caption, setCaption] = useState("");
   const clientRef = useRef<GeminiLiveClient | null>(null);
   const router = useRouter();
 
   const connect = useCallback(async () => {
     setError(null);
+    setCaption("");
     try {
       // In a real app, fetch a short-lived token here
       // For this demo, we'll fetch the key from a server action or API
@@ -32,6 +34,7 @@ export function useGeminiLive() {
         (text) => {
           // Handle text (e.g. captions)
           console.log("Gemini said:", text);
+          setCaption((prev) => prev + text);
         },
         (url) => {
           console.log("Navigating to:", url);
@@ -58,6 +61,7 @@ export function useGeminiLive() {
     }
     setIsConnected(false);
     setIsSpeaking(false);
+    setCaption("");
   }, []);
 
   useEffect(() => {
@@ -71,6 +75,7 @@ export function useGeminiLive() {
     isSpeaking,
     volume,
     error,
+    caption,
     connect,
     disconnect,
   };
