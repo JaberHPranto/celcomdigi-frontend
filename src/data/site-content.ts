@@ -265,7 +265,7 @@ export const heroSlides: HeroSlide[] = [
       "Secure the flagship OPPO Find X9 Pro with bonuses worth up to RM2,638 when you pre-order now.",
     cta: { label: "Explore offer", href: "/promotions/oppo-find-x9-pro" },
     imageAlt: "OPPO Find X9 Pro promotion visual",
-    image: "/placeholder/hero-slide.svg",
+    image: "/placeholder/hero-slide-1.svg",
   },
   {
     title: "Showtime with CelcomDigi",
@@ -273,7 +273,7 @@ export const heroSlides: HeroSlide[] = [
       "Catch blockbuster entertainment, sports and more with Showtime — available in the CelcomDigi app.",
     cta: { label: "See what's on", href: "/showtime" },
     imageAlt: "CelcomDigi Showtime entertainment montage",
-    image: "/placeholder/hero-slide.svg",
+    image: "/placeholder/hero-slide-2.svg",
   },
   {
     title: "CelcomDigi app, reimagined",
@@ -281,7 +281,7 @@ export const heroSlides: HeroSlide[] = [
       "Experience the all-new CelcomDigi super app with bill payment, reload, rewards and personalised care.",
     cta: { label: "Download now", href: "/app" },
     imageAlt: "CelcomDigi app interface preview",
-    image: "/placeholder/hero-slide.svg",
+    image: "/placeholder/hero-slide-3.svg",
   },
   {
     title: "Mega Add-Ons for unstoppable streaming",
@@ -289,7 +289,7 @@ export const heroSlides: HeroSlide[] = [
       "Stack your plan with Mega Add-Ons for more 5G data, entertainment passes and roaming freedom.",
     cta: { label: "Discover add-ons", href: "/postpaid/mega-add-ons" },
     imageAlt: "Mega add-ons illustration",
-    image: "/placeholder/hero-slide.svg",
+    image: "/placeholder/hero-slide-1.svg",
   },
   {
     title: "NX Prepaid — unlimited 5G from RM25",
@@ -297,7 +297,7 @@ export const heroSlides: HeroSlide[] = [
       "Stay unstoppable with high-speed 5G, non-stop social apps and unlimited calls on NX Prepaid.",
     cta: { label: "Find your pass", href: "/prepaid/nx" },
     imageAlt: "NX prepaid young lifestyle",
-    image: "/placeholder/hero-slide.svg",
+    image: "/placeholder/hero-slide-3.svg",
   },
   {
     title: "Home Fibre with WiFi 6 router",
@@ -305,7 +305,7 @@ export const heroSlides: HeroSlide[] = [
       "Elevate your home with CelcomDigi Fibre bundles, free WiFi 6 router and professional installation.",
     cta: { label: "Check availability", href: "/fibre/home-fibre" },
     imageAlt: "Family enjoying high-speed fibre internet",
-    image: "/placeholder/hero-slide.svg",
+    image: "/placeholder/one-ultra.svg",
   },
 ];
 
@@ -447,13 +447,14 @@ export const promotions: PromotionCard[] = [
   {
     category: "Others",
     segment: "Postpaid",
-    title: "Get RM50 Grab voucher with a new Postpaid 5G line on eSIM",
+    title:
+      "Shariah-compliant instalment payments, now available with PayFlex on CelcomDigi app",
+
     href: "/promotions/esim-merchant-offers",
   },
   {
     category: "Others",
-    title:
-      "Shariah-compliant instalment payments, now available with PayFlex on CelcomDigi app",
+    title: "Get RM50 Grab voucher with a new Postpaid 5G line on eSIM",
     href: "/promotions/payflex",
   },
   {

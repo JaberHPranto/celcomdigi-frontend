@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Manrope, Montserrat } from "next/font/google";
 import { Navbar } from "@/components/navigation/navbar";
 import "./globals.css";
 import { VoiceChatAgent } from "@/components/voice-chat-agent";
 
-const geistSans = Geist({
+const geistSans = Montserrat({
   variable: "--font-geist-sans",
   subsets: ["latin"],
 });
