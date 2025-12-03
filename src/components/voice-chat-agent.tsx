@@ -1,30 +1,26 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import { useGeminiLive } from "@/hooks/use-gemini-live";
 import {
+  captureRegion,
+  formatFileSize,
+  getBase64Size,
+  resizeImage,
+} from "@/lib/screen-capture";
+import { cn } from "@/lib/utils";
+import {
+  ArrowUpRight,
+  ChevronLeft,
+  Keyboard,
   Mic,
   MicOff,
-  X,
-  Keyboard,
-  ChevronLeft,
-  MessageCircle,
-  Image as ImageIcon,
-  FileText,
-  Users,
-  Calendar,
   Plus,
+  Scan,
   Send,
-  ArrowUpRight,
+  X,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useGeminiLive } from "@/hooks/use-gemini-live";
-
-const SUGGESTION_CARDS = [
-  { icon: ImageIcon, label: "Generating Image", color: "text-blue-600" },
-  { icon: FileText, label: "Creating Content", color: "text-purple-600" },
-  { icon: Users, label: "Scheduling Meeting", color: "text-indigo-600" },
-  { icon: FileText, label: "Writing Note", color: "text-pink-600" },
-];
+import { useCallback, useEffect, useRef, useState } from "react";
+import { RegionSelector, type SelectedRegion } from "./region-selector";
 
 const HISTORY_CHIPS = [
   "What prepaid datasim plan available?",
@@ -36,6 +32,10 @@ const HISTORY_CHIPS = [
 export function VoiceChatAgent() {
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<"voice" | "chat">("voice");
+  const [isCapturingRegion, setIsCapturingRegion] = useState(false);
+  const [isProcessingCapture, setIsProcessingCapture] = useState(false);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+
   const {
     isConnected,
     error,
@@ -45,6 +45,7 @@ export function VoiceChatAgent() {
     caption,
     userCaption,
     aiCaption,
+    sendImage,
   } = useGeminiLive();
 
   // Handle connection based on open state and mode
@@ -58,6 +59,7 @@ export function VoiceChatAgent() {
   useEffect(() => {
     if (!isOpen) {
       setMode("voice");
+      setCapturedImage(null);
     }
   }, [isOpen]);
 
@@ -68,6 +70,81 @@ export function VoiceChatAgent() {
       connect();
     }
   };
+
+  // Start the screen region capture process
+  const handleStartCapture = useCallback(() => {
+    // Close the chat panel temporarily to allow full screen selection
+    setIsCapturingRegion(true);
+  }, []);
+
+  // Handle when a region is selected
+  const handleRegionSelected = useCallback(
+    async (region: SelectedRegion) => {
+      setIsProcessingCapture(true);
+
+      try {
+        // Capture the selected region
+        const result = await captureRegion(region);
+
+        // Resize if too large (max 1024px)
+        let finalBase64 = result.base64;
+        const originalSize = getBase64Size(result.base64);
+
+        if (originalSize > 500 * 1024) {
+          // If > 500KB, resize
+          finalBase64 = await resizeImage(result.base64, 1024, 1024, 0.7);
+          console.log(
+            `Image resized: ${formatFileSize(originalSize)} -> ${formatFileSize(
+              getBase64Size(finalBase64)
+            )}`
+          );
+        }
+
+        // Store captured image for preview
+        setCapturedImage(`data:${result.mimeType};base64,${finalBase64}`);
+
+        // If connected, send the image immediately
+        if (isConnected) {
+          const success = await sendImage(
+            finalBase64,
+            result.mimeType,
+            "The user has captured this screen region and wants to ask about it. Please analyze this image and be ready to answer questions about it. Start by briefly describing what you see."
+          );
+
+          if (success) {
+            console.log("Image sent to Gemini Live successfully");
+          }
+        }
+      } catch (error) {
+        console.error("Failed to capture region:", error);
+      } finally {
+        setIsProcessingCapture(false);
+        setIsCapturingRegion(false);
+      }
+    },
+    [isConnected, sendImage]
+  );
+
+  // Cancel region capture
+  const handleCancelCapture = useCallback(() => {
+    setIsCapturingRegion(false);
+  }, []);
+
+  // Clear captured image
+  const handleClearCapture = useCallback(() => {
+    setCapturedImage(null);
+  }, []);
+
+  // Show region selector overlay when capturing
+  if (isCapturingRegion) {
+    return (
+      <RegionSelector
+        onRegionSelected={handleRegionSelected}
+        onCancel={handleCancelCapture}
+        isCapturing={isProcessingCapture}
+      />
+    );
+  }
 
   if (!isOpen) {
     return (
@@ -90,9 +167,9 @@ export function VoiceChatAgent() {
     >
       <div
         className={cn(
-          "relative flex h-full w-full flex-col overflow-hidden bg-white sm:w-[400px] sm:rounded-4xl sm:shadow-2xl transition-all duration-300",
+          "relative flex h-full w-full flex-col overflow-hidden bg-white sm:w-[450px] sm:rounded-4xl sm:shadow-2xl transition-all duration-300",
           {
-            "h-auto": mode === "voice",
+            "h-auto max-h-[80vh] overflow-y-auto": mode === "voice",
             "h-[650px]": mode === "chat",
           }
         )}
@@ -103,6 +180,9 @@ export function VoiceChatAgent() {
             onClose={() => setIsOpen(false)}
             isListening={isConnected}
             onToggleListening={handleToggleListening}
+            onStartCapture={handleStartCapture}
+            onClearCapture={handleClearCapture}
+            capturedImage={capturedImage}
             error={error}
             volume={volume}
             caption={caption}
@@ -125,6 +205,9 @@ function VoiceInterface({
   onClose,
   isListening,
   onToggleListening,
+  onStartCapture,
+  onClearCapture,
+  capturedImage,
   error,
   volume = 0,
   caption = "",
@@ -135,6 +218,9 @@ function VoiceInterface({
   onClose: () => void;
   isListening: boolean;
   onToggleListening: () => void;
+  onStartCapture: () => void;
+  onClearCapture: () => void;
+  capturedImage: string | null;
   error: string | null;
   volume?: number;
   caption?: string;
@@ -152,13 +238,72 @@ function VoiceInterface({
           <ChevronLeft className="h-5 w-5" />
         </button>
         <h2 className="text-lg font-semibold text-gray-900">Voice chat</h2>
-        <div className="w-10" /> {/* Spacer for centering */}
+
+        {/* Screen Capture button */}
+        <button
+          onClick={onStartCapture}
+          className={cn(
+            "flex h-12 w-12 items-center justify-center rounded-full transition-colors",
+            capturedImage
+              ? "bg-blue-100 text-blue-600 hover:bg-blue-200"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          )}
+          title="Capture screen region"
+        >
+          <div>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M7 19a2 2 0 0 1 -2 -2" />
+              <path d="M5 13v-2" />
+              <path d="M5 7a2 2 0 0 1 2 -2" />
+              <path d="M11 5h2" />
+              <path d="M17 5a2 2 0 0 1 2 2" />
+              <path d="M19 11v2" />
+              <path d="M19 17v4" />
+              <path d="M21 19h-4" />
+              <path d="M13 19h-2" />
+            </svg>
+          </div>
+        </button>
       </div>
 
       {/* Main Content */}
       <div className="flex flex-1 flex-col items-center justify-center px-8 text-center">
+        {/* Captured Image Preview */}
+        {capturedImage && (
+          <div className="mb-6 relative group">
+            <div className="rounded-xl overflow-hidden border-2 border-blue-200 shadow-lg max-w-[280px]">
+              <img
+                src={capturedImage}
+                alt="Captured region"
+                className="w-full h-auto max-h-40 object-contain bg-gray-50"
+              />
+            </div>
+            <button
+              onClick={onClearCapture}
+              className="absolute -top-2 -right-2 h-6 w-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
+              title="Remove captured image"
+            >
+              <X className="h-3 w-3" />
+            </button>
+            <p className="text-xs text-blue-600 mt-2 font-medium">
+              ✓ Image captured - Ask me about it!
+            </p>
+          </div>
+        )}
+
         {/* The Blob */}
-        <div className="relative mb-16  mt-4 flex items-center justify-center">
+        <div className="relative mb-16 mt-4 flex items-center justify-center">
           <div
             className="relative h-48 w-48 rounded-full transition-transform duration-75 ease-out"
             style={{
@@ -257,14 +402,17 @@ function VoiceInterface({
       </div>
 
       {/* Footer Controls */}
-      <div className="mb-8 flex items-center justify-center gap-6 px-6 pb-6">
+      <div className="mb-8 flex items-center justify-center gap-4 px-6 pb-6">
+        {/* Keyboard / Chat button */}
         <button
           onClick={onSwitchToChat}
           className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200"
+          title="Switch to chat"
         >
           <Keyboard className="h-5 w-5" />
         </button>
 
+        {/* Main Mic button */}
         <button
           onClick={onToggleListening}
           className={cn(
@@ -281,9 +429,11 @@ function VoiceInterface({
           )}
         </button>
 
+        {/* Close button */}
         <button
           onClick={onClose}
           className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200"
+          title="Close"
         >
           <X className="h-5 w-5" />
         </button>
@@ -338,7 +488,6 @@ function ChatInterface({
       if (!response.ok) throw new Error("Failed to fetch");
 
       const data = await response.json();
-      console.log("🚀 ~ data:", data);
 
       if (data.results && data.results.length > 0) {
         // Take the top result
@@ -456,7 +605,7 @@ function ChatInterface({
 
                       <div className="text-gray-700 mt-3 ">
                         <div
-                          className="text-gray-600 leading-relaxed"
+                          className="text-gray-600 leading-relaxed wrap-break-word"
                           dangerouslySetInnerHTML={{
                             __html: msg.content.aiAnswer
                               .replace(

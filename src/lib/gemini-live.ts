@@ -288,6 +288,86 @@ export class GeminiLiveClient {
     }
   }
 
+  /**
+   * Send an image to the Gemini Live session for visual context processing.
+   * The image will be analyzed and the AI can answer questions about it.
+   * @param imageBase64 - Base64 encoded image data (without data URL prefix)
+   * @param mimeType - MIME type of the image (e.g., "image/png", "image/jpeg")
+   * @param prompt - Optional text prompt to accompany the image
+   */
+  async sendImage(
+    imageBase64: string,
+    mimeType: string = "image/jpeg",
+    prompt?: string
+  ) {
+    if (!this.isConnected || !this.session) {
+      console.warn("Cannot send image: not connected to Gemini Live");
+      return false;
+    }
+
+    try {
+      console.log("Sending image to Gemini Live...", {
+        mimeType,
+        hasPrompt: !!prompt,
+        imageSize: `${(imageBase64.length / 1024).toFixed(1)} KB`,
+      });
+
+      // Use sendClientContent for multimodal content (image + optional text)
+      this.session.sendClientContent({
+        turnComplete: true,
+        turns: [
+          {
+            role: "user",
+            parts: [
+              // Include text prompt if provided
+              ...(prompt ? [{ text: prompt }] : []),
+              // Include the image
+              {
+                inlineData: {
+                  data: imageBase64,
+                  mimeType: mimeType,
+                },
+              },
+            ],
+          },
+        ],
+      });
+
+      console.log("Image sent successfully");
+      return true;
+    } catch (error) {
+      console.error("Error sending image to Gemini Live:", error);
+      return false;
+    }
+  }
+
+  /**
+   * Send a text message to the Gemini Live session
+   * @param text - The text message to send
+   */
+  sendText(text: string) {
+    if (!this.isConnected || !this.session) {
+      console.warn("Cannot send text: not connected to Gemini Live");
+      return false;
+    }
+
+    try {
+      this.session.sendClientContent({
+        turnComplete: true,
+        turns: [
+          {
+            role: "user",
+            parts: [{ text }],
+          },
+        ],
+      });
+      return true;
+    } catch (error) {
+      console.error("Error sending text:", error);
+      return false;
+    }
+  }
+
   private sendAudio(pcmData: ArrayBuffer) {
     // Queue audio if not connected yet or session is not ready
     if (!this.isConnected || !this.session) {

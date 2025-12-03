@@ -116,6 +116,56 @@ export function useGeminiLive() {
     setAiCaption("");
   }, []);
 
+  /**
+   * Send an image to the Gemini Live session for visual context analysis.
+   * @param imageBase64 - Base64 encoded image data
+   * @param mimeType - MIME type of the image
+   * @param prompt - Optional prompt to send with the image
+   * @returns true if successful, false otherwise
+   */
+  const sendImage = useCallback(
+    async (
+      imageBase64: string,
+      mimeType: string = "image/jpeg",
+      prompt?: string
+    ): Promise<boolean> => {
+      if (!clientRef.current || !isConnected) {
+        console.warn("Cannot send image: not connected");
+        return false;
+      }
+
+      try {
+        const result = await clientRef.current.sendImage(
+          imageBase64,
+          mimeType,
+          prompt
+        );
+        return result;
+      } catch (error) {
+        console.error("Failed to send image:", error);
+        return false;
+      }
+    },
+    [isConnected]
+  );
+
+  /**
+   * Send a text message to the Gemini Live session
+   * @param text - The text to send
+   * @returns true if successful, false otherwise
+   */
+  const sendText = useCallback(
+    (text: string): boolean => {
+      if (!clientRef.current || !isConnected) {
+        console.warn("Cannot send text: not connected");
+        return false;
+      }
+
+      return clientRef.current.sendText(text);
+    },
+    [isConnected]
+  );
+
   useEffect(() => {
     return () => {
       disconnect();
@@ -132,5 +182,7 @@ export function useGeminiLive() {
     aiCaption,
     connect,
     disconnect,
+    sendImage,
+    sendText,
   };
 }
