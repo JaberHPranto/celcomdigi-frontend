@@ -12,6 +12,10 @@ export function useGeminiLive() {
   const [caption, setCaption] = useState("");
   const [userCaption, setUserCaption] = useState("");
   const [aiCaption, setAiCaption] = useState("");
+  const [toolAction, setToolAction] = useState<{
+    action: string;
+    data: any;
+  } | null>(null);
   const clientRef = useRef<GeminiLiveClient | null>(null);
   const userCaptionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const aiCaptionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -58,6 +62,7 @@ export function useGeminiLive() {
     setCaption("");
     setUserCaption("");
     setAiCaption("");
+    setToolAction(null);
     try {
       // In a real app, fetch a short-lived token here
       // For this demo, we'll fetch the key from a server action or API
@@ -85,7 +90,18 @@ export function useGeminiLive() {
         (vol) => {
           setVolume(vol);
         },
-        handleTranscript
+        handleTranscript,
+        (action, data) => {
+          console.log("Tool action:", action, data);
+          setToolAction({ action, data });
+
+          // Clear tool action after a delay if it's a completion event
+          if (action.endsWith("_complete")) {
+            setTimeout(() => {
+              setToolAction(null);
+            }, 5000);
+          }
+        }
       );
 
       await clientRef.current.connect();
@@ -114,6 +130,7 @@ export function useGeminiLive() {
     setCaption("");
     setUserCaption("");
     setAiCaption("");
+    setToolAction(null);
   }, []);
 
   /**
@@ -180,6 +197,7 @@ export function useGeminiLive() {
     caption,
     userCaption,
     aiCaption,
+    toolAction,
     connect,
     disconnect,
     sendImage,

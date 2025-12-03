@@ -28,10 +28,10 @@ export class AITransformerService {
 
     this.genAI = new GoogleGenerativeAI(apiKey);
     this.model = this.genAI.getGenerativeModel({
-      model: "gemini-2.0-flash-exp",
+      model: "gemini-2.5-flash",
       generationConfig: {
         temperature: 0.3, // Lower temperature for more focused, consistent responses
-        maxOutputTokens: 500, // Keep responses brief
+
       },
     });
   }
@@ -85,8 +85,7 @@ Provide your answer:`;
     } catch (error) {
       console.error("Error generating AI response:", error);
       throw new Error(
-        `AI transformation failed: ${
-          error instanceof Error ? error.message : "Unknown error"
+        `AI transformation failed: ${error instanceof Error ? error.message : "Unknown error"
         }`
       );
     }

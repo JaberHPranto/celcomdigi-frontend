@@ -24,6 +24,7 @@ export class GeminiLiveClient {
   private onTranscript: ((event: TranscriptEvent) => void) | null = null;
   private onUrlReceived: (url: string) => void;
   private onVolumeChange: ((volume: number) => void) | null = null;
+  private onToolAction: ((action: string, data: any) => void) | null = null;
   private genAI: GoogleGenAI;
   private isConnected: boolean = false;
   private audioQueue: ArrayBuffer[] = [];
@@ -33,15 +34,17 @@ export class GeminiLiveClient {
     onTextReceived: (text: string) => void,
     onUrlReceived: (url: string) => void,
     onVolumeChange?: (volume: number) => void,
-    onTranscript?: (event: TranscriptEvent) => void
+    onTranscript?: (event: TranscriptEvent) => void,
+    onToolAction?: (action: string, data: any) => void
   ) {
     this.apiKey = apiKey;
     this.onTextReceived = onTextReceived;
     this.onUrlReceived = onUrlReceived;
     this.onVolumeChange = onVolumeChange || null;
     this.onTranscript = onTranscript || null;
+    this.onToolAction = onToolAction || null;
 
-    this.genAI = new GoogleGenAI({ apiKey: this.apiKey });
+    this.genAI = new GoogleGenAI({ apiKey: this.apiKey, vertexai: true });
 
     this.audioPlayer = new AudioPlayer(24000, (vol) => {
       this.onVolumeChange?.(vol);
@@ -57,20 +60,19 @@ export class GeminiLiveClient {
 
       // Connect to the Live API with configuration and callbacks
       this.session = await this.genAI.live.connect({
-        model: "gemini-2.0-flash-exp",
+        model: "gemini-live-2.5-flash-preview",
         config: {
           responseModalities: [Modality.AUDIO],
           outputAudioTranscription: {}, // Enable output audio transcription
           inputAudioTranscription: {}, // Enable input audio transcription
-          generationConfig: {
-            speechConfig: {
-              voiceConfig: {
-                prebuiltVoiceConfig: {
-                  voiceName: "Puck", // or "Charon", "Kore", "Fenrir", "Aoede"
-                },
+          speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: {
+                voiceName: "Puck", // or "Charon", "Kore", "Fenrir", "Aoede"
               },
             },
           },
+
           systemInstruction: `
           # System Role
 
@@ -159,6 +161,84 @@ export class GeminiLiveClient {
                     required: ["query"],
                   },
                 },
+                {
+                  name: "run_network_diagnostic",
+                  description:
+                    "Run a diagnostic check on the user's network connection. Use this when users complain about slow internet, no signal, or connectivity issues.",
+                  parameters: {
+                    type: Type.OBJECT,
+                    properties: {},
+                  },
+                },
+                {
+                  name: "purchase_prepaid_postpaid_plan",
+                  description:
+                    "Purchase a mobile plan (Prepaid or Postpaid). Use this when the user explicitly agrees to buy a specific mobile plan.",
+                  parameters: {
+                    type: Type.OBJECT,
+                    properties: {
+                      planName: {
+                        type: Type.STRING,
+                        description: "The name of the plan (e.g., 'Postpaid 5G 80').",
+                      },
+                      price: {
+                        type: Type.STRING,
+                        description: "The price of the plan (e.g., 'RM80/month').",
+                      },
+                      type: {
+                        type: Type.STRING,
+                        description: "The type of plan: 'prepaid' or 'postpaid'.",
+                      },
+                    },
+                    required: ["planName", "type"],
+                  },
+                },
+                {
+                  name: "purchase_fibre_plan",
+                  description:
+                    "Purchase a fibre internet plan. Use this when the user explicitly agrees to sign up for fibre.",
+                  parameters: {
+                    type: Type.OBJECT,
+                    properties: {
+                      planName: {
+                        type: Type.STRING,
+                        description: "The name of the fibre plan (e.g., '300Mbps Fibre').",
+                      },
+                      speed: {
+                        type: Type.STRING,
+                        description: "The speed of the plan (e.g., '300Mbps').",
+                      },
+                      price: {
+                        type: Type.STRING,
+                        description: "The price of the plan (e.g., 'RM100/month').",
+                      },
+                    },
+                    required: ["planName", "speed"],
+                  },
+                },
+                {
+                  name: "purchase_roaming_pass",
+                  description:
+                    "Purchase a roaming pass for travel. Use this when the user explicitly agrees to buy a roaming pass.",
+                  parameters: {
+                    type: Type.OBJECT,
+                    properties: {
+                      country: {
+                        type: Type.STRING,
+                        description: "The destination country (e.g., 'Japan', 'Singapore').",
+                      },
+                      duration: {
+                        type: Type.STRING,
+                        description: "The duration of the pass (e.g., '3 Days', '7 Days').",
+                      },
+                      price: {
+                        type: Type.STRING,
+                        description: "The price of the pass (e.g., 'RM38').",
+                      },
+                    },
+                    required: ["country", "price"],
+                  },
+                },
               ],
             },
           ],
@@ -231,7 +311,7 @@ export class GeminiLiveClient {
         });
       }
 
-      // Handle model turn with parts
+      // Handle  turn with parts
       if (message.serverContent.modelTurn) {
         for (const part of message.serverContent.modelTurn.parts || []) {
           // Handle audio response
@@ -272,6 +352,66 @@ export class GeminiLiveClient {
               this.onUrlReceived(result.results[0].url);
             }
           }
+        } else if (call.name === "run_network_diagnostic" && call.id) {
+          // Notify UI to show diagnostic animation
+          this.onToolAction?.("diagnostic_start", {});
+
+          // Simulate a delay for the "scan"
+          setTimeout(() => {
+            this.sendToolResponse(call.id ?? "", {
+              status: "success",
+              issue_found: "Port congestion detected",
+              action_taken: "Port reset successfully",
+              current_speed: "500Mbps",
+              latency: "12ms"
+            });
+            this.onToolAction?.("diagnostic_complete", { status: "fixed" });
+          }, 3000);
+        } else if (call.name === "purchase_prepaid_postpaid_plan" && call.args && call.id) {
+          const planName = (call.args as any).planName;
+          const price = (call.args as any).price || "RM80";
+          const type = (call.args as any).type || "postpaid";
+
+          this.onToolAction?.("purchase_mobile_start", { planName, price, type });
+
+          setTimeout(() => {
+            this.sendToolResponse(call.id ?? "", {
+              status: "success",
+              transaction_id: "MOB-" + Math.floor(Math.random() * 100000),
+              message: `${planName} (${type}) activated successfully.`
+            });
+            this.onToolAction?.("purchase_mobile_complete", { planName, type });
+          }, 2000);
+        } else if (call.name === "purchase_fibre_plan" && call.args && call.id) {
+          const planName = (call.args as any).planName;
+          const speed = (call.args as any).speed || "300Mbps";
+          const price = (call.args as any).price || "RM100";
+
+          this.onToolAction?.("purchase_fibre_start", { planName, speed, price });
+
+          setTimeout(() => {
+            this.sendToolResponse(call.id ?? "", {
+              status: "success",
+              transaction_id: "FIB-" + Math.floor(Math.random() * 100000),
+              message: `${planName} installation scheduled.`
+            });
+            this.onToolAction?.("purchase_fibre_complete", { planName, speed });
+          }, 2000);
+        } else if (call.name === "purchase_roaming_pass" && call.args && call.id) {
+          const country = (call.args as any).country;
+          const duration = (call.args as any).duration || "7 Days";
+          const price = (call.args as any).price || "RM38";
+
+          this.onToolAction?.("purchase_roaming_start", { country, duration, price });
+
+          setTimeout(() => {
+            this.sendToolResponse(call.id ?? "", {
+              status: "success",
+              transaction_id: "ROAM-" + Math.floor(Math.random() * 100000),
+              message: `Roaming pass for ${country} activated.`
+            });
+            this.onToolAction?.("purchase_roaming_complete", { country, duration });
+          }, 2000);
         }
       }
     }
@@ -307,7 +447,7 @@ export class GeminiLiveClient {
 
     try {
       console.log("Sending image to Gemini Live...", {
-        mimeType,
+        mimeType: mimeType || "image/jpeg",
         hasPrompt: !!prompt,
         imageSize: `${(imageBase64.length / 1024).toFixed(1)} KB`,
       });
@@ -325,7 +465,7 @@ export class GeminiLiveClient {
               {
                 inlineData: {
                   data: imageBase64,
-                  mimeType: mimeType,
+                  mimeType: mimeType || "image/jpeg",
                 },
               },
             ],
