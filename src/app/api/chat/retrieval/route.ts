@@ -2,16 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { GeminiEmbeddingService } from "@/lib/services/embedding/gemini-embedding-service";
 import { SupabaseVectorStore } from "@/lib/services/vectorstore/supabase-vector-store";
 import { markdownToPlainText } from "@/lib/utils/markdown-utils";
+import { AITransformerService } from "@/lib/services/ai-transformer";
 
 /**
  * POST /api/chat/retrieval
  *
- * Retrieves relevant documents based on a query using RAG.
+ * Retrieves relevant documents based on a query using RAG with AI transformation.
  *
  * Request body:
  * {
  *   "query": "What is prepaid datasim plan available?",
- *   "k": 5 // optional, defaults to 5
+ *   "k": 5, // optional, defaults to 5
+ *   "transform": true // optional, defaults to true - enables AI transformation
  * }
  *
  * Response:
@@ -24,7 +26,8 @@ import { markdownToPlainText } from "@/lib/utils/markdown-utils";
  *       "category": "prepaid",
  *       "url": "https://...",
  *       "contentMarkdown": "...",
- *       "contentPlainText": "..."
+ *       "contentPlainText": "...",
+ *       "aiAnswer": "..." // included when transform=true
  *     }
  *   ]
  * }
@@ -33,7 +36,7 @@ export async function POST(request: NextRequest) {
   try {
     // Parse request body
     const body = await request.json();
-    const { query, k = 5 } = body;
+    const { query, k = 5, transform = true } = body;
 
     if (!query || typeof query !== "string") {
       return NextResponse.json(
@@ -66,6 +69,34 @@ export async function POST(request: NextRequest) {
       contentMarkdown: result.content,
       contentPlainText: markdownToPlainText(result.content),
     }));
+
+    // Apply AI transformation if enabled
+    if (transform && results.length > 0) {
+      try {
+        const aiTransformer = new AITransformerService(
+          process.env.GEMINI_API_KEY!
+        );
+
+        // Transform all results
+        const transformations = await Promise.all(
+          results.map((result) =>
+            aiTransformer.transform(query, result.content, {
+              url: result.metadata.url,
+              category: result.metadata.category,
+            })
+          )
+        );
+
+        // Add AI answers to formatted results
+        formattedResults.forEach((result, idx) => {
+          (result as any).aiAnswer = transformations[idx].humanFriendlyAnswer;
+        });
+      } catch (aiError) {
+        console.error("AI transformation error:", aiError);
+        // Continue without AI transformation if it fails
+        console.warn("Continuing without AI transformation");
+      }
+    }
 
     return NextResponse.json({
       query,

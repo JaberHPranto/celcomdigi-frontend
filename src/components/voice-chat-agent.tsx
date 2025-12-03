@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   Mic,
+  MicOff,
   X,
   Keyboard,
   ChevronLeft,
@@ -48,12 +49,10 @@ export function VoiceChatAgent() {
 
   // Handle connection based on open state and mode
   useEffect(() => {
-    if (isOpen && mode === "voice") {
-      connect();
-    } else {
+    if (!isOpen || mode !== "voice") {
       disconnect();
     }
-  }, [isOpen, mode, connect, disconnect]);
+  }, [isOpen, mode, disconnect]);
 
   // Reset mode when closed
   useEffect(() => {
@@ -61,6 +60,14 @@ export function VoiceChatAgent() {
       setMode("voice");
     }
   }, [isOpen]);
+
+  const handleToggleListening = () => {
+    if (isConnected) {
+      disconnect();
+    } else {
+      connect();
+    }
+  };
 
   if (!isOpen) {
     return (
@@ -95,6 +102,7 @@ export function VoiceChatAgent() {
             onSwitchToChat={() => setMode("chat")}
             onClose={() => setIsOpen(false)}
             isListening={isConnected}
+            onToggleListening={handleToggleListening}
             error={error}
             volume={volume}
             caption={caption}
@@ -116,6 +124,7 @@ function VoiceInterface({
   onSwitchToChat,
   onClose,
   isListening,
+  onToggleListening,
   error,
   volume = 0,
   caption = "",
@@ -125,6 +134,7 @@ function VoiceInterface({
   onSwitchToChat: () => void;
   onClose: () => void;
   isListening: boolean;
+  onToggleListening: () => void;
   error: string | null;
   volume?: number;
   caption?: string;
@@ -158,7 +168,12 @@ function VoiceInterface({
             }}
           >
             {/* Core gradient */}
-            <div className="absolute inset-0 rounded-full bg-linear-to-br from-blue-400 via-purple-500 to-indigo-600 opacity-80 blur-xl animate-pulse" />
+            <div
+              className={cn(
+                "absolute inset-0 rounded-full bg-linear-to-br from-blue-400 via-purple-500 to-indigo-600 opacity-80 blur-xl",
+                isListening ? "animate-pulse" : "opacity-40"
+              )}
+            />
 
             {/* Inner texture simulation */}
             <div
@@ -168,7 +183,12 @@ function VoiceInterface({
                   "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8) 0%, rgba(100,100,255,0) 20%), conic-gradient(from 0deg, #a5b4fc, #818cf8, #6366f1, #a5b4fc)",
               }}
             >
-              <div className="absolute inset-0 rounded-full bg-white/20 backdrop-blur-sm animate-[spin_8s_linear_infinite]" />
+              <div
+                className={cn(
+                  "absolute inset-0 rounded-full bg-white/20 backdrop-blur-sm",
+                  isListening ? "animate-[spin_8s_linear_infinite]" : ""
+                )}
+              />
             </div>
 
             {/* Shine effect */}
@@ -186,11 +206,19 @@ function VoiceInterface({
 
           <p
             className={cn(
-              "text-sm font-medium animate-pulse mb-3",
-              error ? "text-red-500" : "text-blue-600"
+              "text-sm font-medium mb-3",
+              error
+                ? "text-red-500"
+                : isListening
+                ? "text-blue-600 animate-pulse"
+                : "text-gray-500"
             )}
           >
-            {error ? error : isListening ? "listening..." : "Connecting..."}
+            {error
+              ? error
+              : isListening
+              ? "Listening..."
+              : "Tap microphone to start"}
           </p>
 
           {/* Live Caption Display */}
@@ -237,8 +265,20 @@ function VoiceInterface({
           <Keyboard className="h-5 w-5" />
         </button>
 
-        <button className="flex h-20 w-20 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg shadow-blue-200 transition-transform hover:scale-105 active:scale-95">
-          <Mic className="h-8 w-8" />
+        <button
+          onClick={onToggleListening}
+          className={cn(
+            "flex h-20 w-20 items-center justify-center rounded-full shadow-lg transition-all duration-300 hover:scale-105 active:scale-95",
+            isListening
+              ? "bg-red-500 text-white shadow-red-200 animate-pulse"
+              : "bg-blue-600 text-white shadow-blue-200"
+          )}
+        >
+          {isListening ? (
+            <MicOff className="h-8 w-8" />
+          ) : (
+            <Mic className="h-8 w-8" />
+          )}
         </button>
 
         <button
@@ -292,12 +332,13 @@ function ChatInterface({
       const response = await fetch("/api/chat/retrieval", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: userQuery }),
+        body: JSON.stringify({ query: userQuery, k: 1 }),
       });
 
       if (!response.ok) throw new Error("Failed to fetch");
 
       const data = await response.json();
+      console.log("🚀 ~ data:", data);
 
       if (data.results && data.results.length > 0) {
         // Take the top result
@@ -413,120 +454,18 @@ function ChatInterface({
                         </span>
                       </div>
 
-                      <div className="text-gray-800">
-                        {/* Custom rendering for the specific JSON structure */}
-                        {msg.content.contentMarkdown ? (
-                          <div className="space-y-4">
-                            {msg.content.contentMarkdown
-                              .split("\n")
-                              .map((line: string, i: number) => {
-                                // H2 - Main Title
-                                if (line.startsWith("## ")) {
-                                  return (
-                                    <h3
-                                      key={i}
-                                      className="text-lg font-bold text-gray-900 leading-tight"
-                                    >
-                                      {line.replace("## ", "")}
-                                    </h3>
-                                  );
-                                }
-                                // H5 - Section Headers
-                                if (line.startsWith("##### ")) {
-                                  const content = line.replace("##### ", "");
-                                  // Handle bold in H5
-                                  const parts = content.split("**");
-                                  return (
-                                    <h5
-                                      key={i}
-                                      className="text-sm font-semibold text-gray-700 mt-4 mb-2"
-                                    >
-                                      {parts.map((part, pIdx) =>
-                                        pIdx % 2 === 1 ? (
-                                          <span
-                                            key={pIdx}
-                                            className="font-bold text-gray-900"
-                                          >
-                                            {part}
-                                          </span>
-                                        ) : (
-                                          part
-                                        )
-                                      )}
-                                    </h5>
-                                  );
-                                }
-                                // Bold lines (often key info)
-                                if (
-                                  line.startsWith("**") &&
-                                  line.endsWith("**")
-                                ) {
-                                  return (
-                                    <p
-                                      key={i}
-                                      className="font-semibold text-gray-900"
-                                    >
-                                      {line.replace(/\*\*/g, "")}
-                                    </p>
-                                  );
-                                }
-                                // Links
-                                if (line.match(/\[.*\]\(.*\)/)) {
-                                  const match = line.match(/\[(.*)\]\((.*)\)/);
-                                  if (match) {
-                                    return (
-                                      <a
-                                        key={i}
-                                        href={match[2]}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center text-blue-600 hover:underline font-medium mt-2"
-                                      >
-                                        {match[1]}{" "}
-                                        <ArrowUpRight className="ml-1 h-3 w-3" />
-                                      </a>
-                                    );
-                                  }
-                                }
-                                // Empty lines
-                                if (!line.trim()) return null;
-
-                                // Regular text with potential bold parts
-                                const parts = line.split("**");
-                                return (
-                                  <p
-                                    key={i}
-                                    className={cn(
-                                      "text-sm leading-relaxed",
-                                      // Heuristic for price or short prominent text
-                                      line.length < 20 &&
-                                        (line.includes("RM") ||
-                                          line.includes("DataSIM"))
-                                        ? "font-medium text-gray-900"
-                                        : "text-gray-600"
-                                    )}
-                                  >
-                                    {parts.map((part, pIdx) =>
-                                      pIdx % 2 === 1 ? (
-                                        <span
-                                          key={pIdx}
-                                          className="font-bold text-gray-900"
-                                        >
-                                          {part}
-                                        </span>
-                                      ) : (
-                                        part
-                                      )
-                                    )}
-                                  </p>
-                                );
-                              })}
-                          </div>
-                        ) : (
-                          <div className="whitespace-pre-wrap text-sm">
-                            {msg.content.contentMarkdown}
-                          </div>
-                        )}
+                      <div className="text-gray-700 mt-3 ">
+                        <div
+                          className="text-gray-600 leading-relaxed"
+                          dangerouslySetInnerHTML={{
+                            __html: msg.content.aiAnswer
+                              .replace(
+                                /\*\*(.*?)\*\*/g,
+                                "<strong class='font-semibold text-blue-600'>$1</strong>"
+                              )
+                              .replace(/\n/g, "<br/>"),
+                          }}
+                        />
 
                         {msg.content.url && (
                           <div className="mt-4 pt-3 border-t border-gray-100">
@@ -540,7 +479,7 @@ function ChatInterface({
                                 <span className="text-xs font-medium text-blue-600 uppercase tracking-wider">
                                   Visit Page
                                 </span>
-                                <span className="text-sm font-semibold text-blue-900 group-hover:text-blue-800 truncate max-w-[200px]">
+                                <span className=" mt-1 text-sm font-semibold text-blue-900 group-hover:text-blue-800 truncate max-w-[200px]">
                                   View full details
                                 </span>
                               </div>

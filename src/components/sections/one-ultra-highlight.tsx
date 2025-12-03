@@ -6,7 +6,7 @@ export function OneUltraHighlight() {
   return (
     <section
       id="one-ultra"
-      className="border-b border-border/80 bg-linear-to-r from-secondary/20 via-background to-primary/10 py-16"
+      className="border-b border-border/80 bg-linear-to-r from-secondary/20 via-background to-primary/10 py-48"
     >
       <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 md:grid-cols-2">
         <div className="space-y-6">
