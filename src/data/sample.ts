@@ -1,4 +1,4 @@
-const mockToolActions = [
+export const mockToolActions = [
   { action: "diagnostic_start", data: {} },
   { action: "diagnostic_complete", data: {} },
   {

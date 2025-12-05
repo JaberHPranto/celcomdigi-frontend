@@ -1,8 +1,8 @@
 export const HISTORY_CHIPS = [
-  "What prepaid datasim plan available?",
   "What 5G plans are available?",
-  "How much does roaming cost?",
+  "Does the SpeedSTREAM plan include Netflix?",
   "Can you tell me about the Home Fibre plan? ",
+  "What roaming options do I have for my postpaid plan?",
 ];
 
 export interface VoiceInterfaceProps {

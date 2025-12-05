@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
 
     // Search for similar documents using hybrid search for better results
     const results = await vectorStore.hybridSearch(queryEmbedding, query, k);
+    console.log("🚀 ~ results:", results);
 
     // Format results
     const formattedResults = results.map((result, idx) => ({

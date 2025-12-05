@@ -151,7 +151,7 @@ export function ChatInterface({ onBack, onClose }: ChatInterfaceProps) {
                 {HISTORY_CHIPS.map((chip, idx) => (
                   <button
                     key={idx}
-                    className="whitespace-pre-wrap rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-all text-left shadow-sm active:scale-95"
+                    className="whitespace-pre-wrap rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-all text-left shadow-[rgba(0,0,0,0.25)_0px_1px_2px] active:scale-95"
                     onClick={() => setInputValue(chip)}
                     style={{ animationDelay: `${idx * 50}ms` }}
                   >
@@ -273,29 +273,21 @@ export function ChatInterface({ onBack, onClose }: ChatInterfaceProps) {
       {/* Input Area */}
       <div className="bg-white p-4 border-t border-gray-100 shadow-[0_-4px_20px_-1px_rgba(0,0,0,0.05)] relative z-20">
         <div className="relative flex items-center gap-2 rounded-2xl bg-gray-50 p-2 pr-2 border border-gray-200 focus-within:border-blue-300 focus-within:ring-4 focus-within:ring-blue-50 transition-all">
-          <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-gray-500 shadow-sm hover:text-blue-600 hover:bg-blue-50 transition-colors border border-gray-100">
-            <Plus className="h-5 w-5" />
-          </button>
-
           <input
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
             placeholder="Ask anything..."
-            className="flex-1 bg-transparent px-2 text-gray-900 placeholder-gray-400 focus:outline-none text-sm font-medium"
+            className="flex-1 bg-transparent px-2 text-gray-900 placeholder-gray-400 focus:outline-none text-sm font-medium  h-10"
           />
 
-          {inputValue.trim() ? (
+          {inputValue.trim() && (
             <button
               onClick={handleSend}
               className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md hover:bg-blue-700 transition-all hover:scale-105 active:scale-95"
             >
               <Send className="h-4 w-4" />
-            </button>
-          ) : (
-            <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-transparent text-gray-400 hover:text-gray-600 transition-colors">
-              <Mic className="h-5 w-5" />
             </button>
           )}
         </div>

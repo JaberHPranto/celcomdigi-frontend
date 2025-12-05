@@ -44,7 +44,7 @@ export class GeminiLiveClient {
     this.onTranscript = onTranscript || null;
     this.onToolAction = onToolAction || null;
 
-    this.genAI = new GoogleGenAI({ apiKey: this.apiKey, vertexai: true });
+    this.genAI = new GoogleGenAI({ apiKey: this.apiKey });
 
     this.audioPlayer = new AudioPlayer(24000, (vol) => {
       this.onVolumeChange?.(vol);
@@ -179,15 +179,18 @@ export class GeminiLiveClient {
                     properties: {
                       planName: {
                         type: Type.STRING,
-                        description: "The name of the plan (e.g., 'Postpaid 5G 80').",
+                        description:
+                          "The name of the plan (e.g., 'Postpaid 5G 80').",
                       },
                       price: {
                         type: Type.STRING,
-                        description: "The price of the plan (e.g., 'RM80/month').",
+                        description:
+                          "The price of the plan (e.g., 'RM80/month').",
                       },
                       type: {
                         type: Type.STRING,
-                        description: "The type of plan: 'prepaid' or 'postpaid'.",
+                        description:
+                          "The type of plan: 'prepaid' or 'postpaid'.",
                       },
                     },
                     required: ["planName", "type"],
@@ -202,7 +205,8 @@ export class GeminiLiveClient {
                     properties: {
                       planName: {
                         type: Type.STRING,
-                        description: "The name of the fibre plan (e.g., '300Mbps Fibre').",
+                        description:
+                          "The name of the fibre plan (e.g., '300Mbps Fibre').",
                       },
                       speed: {
                         type: Type.STRING,
@@ -210,7 +214,8 @@ export class GeminiLiveClient {
                       },
                       price: {
                         type: Type.STRING,
-                        description: "The price of the plan (e.g., 'RM100/month').",
+                        description:
+                          "The price of the plan (e.g., 'RM100/month').",
                       },
                     },
                     required: ["planName", "speed"],
@@ -225,11 +230,13 @@ export class GeminiLiveClient {
                     properties: {
                       country: {
                         type: Type.STRING,
-                        description: "The destination country (e.g., 'Japan', 'Singapore').",
+                        description:
+                          "The destination country (e.g., 'Japan', 'Singapore').",
                       },
                       duration: {
                         type: Type.STRING,
-                        description: "The duration of the pass (e.g., '3 Days', '7 Days').",
+                        description:
+                          "The duration of the pass (e.g., '3 Days', '7 Days').",
                       },
                       price: {
                         type: Type.STRING,
@@ -363,54 +370,81 @@ export class GeminiLiveClient {
               issue_found: "Port congestion detected",
               action_taken: "Port reset successfully",
               current_speed: "500Mbps",
-              latency: "12ms"
+              latency: "12ms",
             });
             this.onToolAction?.("diagnostic_complete", { status: "fixed" });
           }, 3000);
-        } else if (call.name === "purchase_prepaid_postpaid_plan" && call.args && call.id) {
+        } else if (
+          call.name === "purchase_prepaid_postpaid_plan" &&
+          call.args &&
+          call.id
+        ) {
           const planName = (call.args as any).planName;
           const price = (call.args as any).price || "RM80";
           const type = (call.args as any).type || "postpaid";
 
-          this.onToolAction?.("purchase_mobile_start", { planName, price, type });
+          this.onToolAction?.("purchase_mobile_start", {
+            planName,
+            price,
+            type,
+          });
 
           setTimeout(() => {
             this.sendToolResponse(call.id ?? "", {
               status: "success",
               transaction_id: "MOB-" + Math.floor(Math.random() * 100000),
-              message: `${planName} (${type}) activated successfully.`
+              message: `${planName} (${type}) activated successfully.`,
             });
             this.onToolAction?.("purchase_mobile_complete", { planName, type });
           }, 2000);
-        } else if (call.name === "purchase_fibre_plan" && call.args && call.id) {
+        } else if (
+          call.name === "purchase_fibre_plan" &&
+          call.args &&
+          call.id
+        ) {
           const planName = (call.args as any).planName;
           const speed = (call.args as any).speed || "300Mbps";
           const price = (call.args as any).price || "RM100";
 
-          this.onToolAction?.("purchase_fibre_start", { planName, speed, price });
+          this.onToolAction?.("purchase_fibre_start", {
+            planName,
+            speed,
+            price,
+          });
 
           setTimeout(() => {
             this.sendToolResponse(call.id ?? "", {
               status: "success",
               transaction_id: "FIB-" + Math.floor(Math.random() * 100000),
-              message: `${planName} installation scheduled.`
+              message: `${planName} installation scheduled.`,
             });
             this.onToolAction?.("purchase_fibre_complete", { planName, speed });
           }, 2000);
-        } else if (call.name === "purchase_roaming_pass" && call.args && call.id) {
+        } else if (
+          call.name === "purchase_roaming_pass" &&
+          call.args &&
+          call.id
+        ) {
           const country = (call.args as any).country;
           const duration = (call.args as any).duration || "7 Days";
           const price = (call.args as any).price || "RM38";
 
-          this.onToolAction?.("purchase_roaming_start", { country, duration, price });
+          this.onToolAction?.("purchase_roaming_start", {
+            country,
+            duration,
+            price,
+          });
 
           setTimeout(() => {
             this.sendToolResponse(call.id ?? "", {
               status: "success",
               transaction_id: "ROAM-" + Math.floor(Math.random() * 100000),
-              message: `Roaming pass for ${country} activated.`
+              message: `Roaming pass for ${country} activated.`,
             });
-            this.onToolAction?.("purchase_roaming_complete", { country, duration });
+            this.onToolAction?.("purchase_roaming_complete", {
+              country,
+              duration,
+            });
           }, 2000);
         }
       }

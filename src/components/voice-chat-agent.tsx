@@ -146,7 +146,7 @@ export function VoiceChatAgent() {
           "relative flex h-full w-full flex-col overflow-hidden bg-white sm:w-[450px] sm:rounded-4xl sm:shadow-2xl transition-all duration-300",
           {
             "h-auto max-h-[80vh] overflow-y-auto": mode === "voice",
-            "h-[650px]": mode === "chat",
+            "h-[660px]": mode === "chat",
           }
         )}
       >

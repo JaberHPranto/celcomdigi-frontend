@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { ChevronLeft, Keyboard, Mic, MicOff, X, Crop } from "lucide-react";
 import { VoiceInterfaceProps } from "./types";
 import { ToolActionVisuals } from "./tool-action-visuals";
+import { mockToolActions } from "../../data/sample";
 
 export function VoiceInterface({
   onSwitchToChat,
@@ -21,7 +22,7 @@ export function VoiceInterface({
   toolAction = null,
 }: VoiceInterfaceProps) {
   return (
-    <>
+    <div className="flex flex-col h-full w-full relative overflow-hidden bg-linear-to-t from-blue-100 via-blue-50/50 to-white">
       {/* Header */}
       <div className="flex items-center justify-between p-6 relative z-10">
         <button
@@ -53,11 +54,44 @@ export function VoiceInterface({
       </div>
 
       {/* Main Content */}
-      <div className="flex flex-1 flex-col items-center justify-center px-8 text-center relative">
-        {/* Background Ambient Glow */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-400/10 rounded-full blur-3xl animate-pulse [animation-delay:1s]" />
+      <div className="flex flex-1 flex-col items-center justify-center text-center relative">
+        {/* The Blob */}
+        <div className="relative mb-16 mt-4 flex items-center justify-center">
+          <div
+            className="relative h-48 w-48 rounded-full transition-transform duration-75 ease-out "
+            style={{
+              transform: isListening
+                ? `scale(${1 + Math.min(volume * 1.5, 0.5)})`
+                : "scale(1)",
+            }}
+          >
+            {/* Core gradient */}
+            <div
+              className={cn(
+                "absolute inset-0 rounded-full bg-linear-to-br from-blue-400 via-purple-500 to-indigo-600 opacity-80 blur-xl",
+                isListening ? "animate-pulse" : "opacity-40"
+              )}
+            />
+
+            {/* Inner texture simulation */}
+            <div
+              className="absolute inset-2 rounded-full bg-linear-to-tr from-blue-300 via-indigo-400 to-purple-400 opacity-90 shadow-inner animate-[spin_20s_linear_infinite]"
+              style={{
+                background:
+                  "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8) 0%, rgba(100,100,255,0) 20%), conic-gradient(from 0deg, #a5b4fc, #818cf8, #6366f1, #a5b4fc)",
+              }}
+            >
+              <div
+                className={cn(
+                  "absolute inset-0 rounded-full bg-white/20 backdrop-blur-sm",
+                  isListening ? "animate-[spin_8s_linear_infinite]" : ""
+                )}
+              />
+            </div>
+
+            {/* Shine effect */}
+            <div className="absolute top-4 left-8 h-12 w-20 -rotate-45 rounded-full bg-linear-to-b from-white/60 to-transparent blur-md" />
+          </div>
         </div>
 
         {/* Captured Image Preview */}
@@ -85,48 +119,9 @@ export function VoiceInterface({
           </div>
         )}
 
-        {/* The Blob Animation */}
-        <div className="relative mb-12 mt-4 flex items-center justify-center">
-          {/* Outer rings */}
-          {isListening && (
-            <>
-              <div className="absolute inset-0 rounded-full border border-blue-200 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite]" />
-              <div className="absolute inset-0 rounded-full border border-purple-200 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite] [animation-delay:0.5s]" />
-            </>
-          )}
-
-          <div
-            className="relative h-56 w-56 transition-all duration-100 ease-out"
-            style={{
-              transform: isListening
-                ? `scale(${1 + Math.min(volume * 2, 0.4)})`
-                : "scale(1)",
-            }}
-          >
-            {/* Core gradient */}
-            <div
-              className={cn(
-                "absolute inset-0 rounded-full bg-linear-to-br from-blue-500 via-indigo-500 to-purple-600 blur-xl transition-opacity duration-500",
-                isListening ? "opacity-60" : "opacity-30"
-              )}
-            />
-
-            {/* Main Orb */}
-            <div className="absolute inset-4 rounded-full bg-linear-to-tr from-blue-400 via-indigo-500 to-purple-500 shadow-2xl overflow-hidden">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.4),transparent)]" />
-              <div className="absolute inset-0 bg-[conic-gradient(from_0deg,transparent,rgba(255,255,255,0.2),transparent)] animate-[spin_4s_linear_infinite]" />
-
-              {/* Inner fluid effect */}
-              <div className="absolute inset-0 opacity-50 mix-blend-overlay">
-                <div className="absolute -inset-full bg-linear-to-r from-transparent via-white/30 to-transparent rotate-45 animate-[shimmer_3s_infinite]" />
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Text and Captions */}
-        <div className="space-y-6 max-w-lg relative z-10 min-h-[120px]">
-          {!userCaption && !aiCaption && !toolAction && (
+        <div className="space-y-6 relative z-10 min-h-[120px]  w-full px-6">
+          {!userCaption && !aiCaption && !toolAction && !capturedImage && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
               <h3 className="text-2xl font-semibold text-gray-900 mb-2">
                 How can I help you?
@@ -141,14 +136,32 @@ export function VoiceInterface({
           {(userCaption || aiCaption) && !toolAction && (
             <div className="space-y-4">
               {userCaption && (
-                <p className="text-xl font-medium text-gray-600 animate-in fade-in slide-in-from-bottom-2">
-                  "{userCaption}"
-                </p>
+                <div className="rounded-2xl bg-gray-100 p-4 shadow-sm border border-gray-200">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-medium text-gray-500">
+                      You
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-700 leading-relaxed">
+                    {userCaption} I am interested to know more about your 5G
+                    plans.
+                  </p>
+                </div>
               )}
+
+              {/* AI Caption */}
               {aiCaption && (
-                <p className="text-xl font-medium text-blue-600 animate-in fade-in slide-in-from-bottom-2">
-                  {aiCaption}
-                </p>
+                <div className="rounded-2xl bg-linear-to-br from-blue-50 to-indigo-50 p-4 shadow-sm border border-blue-100">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-medium text-blue-600">
+                      AI
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-700 leading-relaxed">
+                    {aiCaption}
+                    including...
+                  </p>
+                </div>
               )}
             </div>
           )}
@@ -167,6 +180,25 @@ export function VoiceInterface({
         </div>
       </div>
 
+      <div className="text-center">
+        <p
+          className={cn(
+            "text-sm font-medium",
+            error
+              ? "text-red-500"
+              : isListening
+              ? "text-blue-600 animate-pulse"
+              : "text-gray-400/80"
+          )}
+        >
+          {error
+            ? error
+            : isListening
+            ? "Listening..."
+            : "Tap microphone to start"}
+        </p>
+      </div>
+
       {/* Footer Controls */}
       <div className="p-8 flex items-center justify-center gap-6 relative z-10">
         <button
@@ -180,10 +212,10 @@ export function VoiceInterface({
         <button
           onClick={onToggleListening}
           className={cn(
-            "h-20 w-20 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95",
+            "h-20 w-20 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer",
             isListening
               ? "bg-red-500 text-white shadow-red-200 animate-pulse"
-              : "bg-blue-600 text-white shadow-blue-200"
+              : "bg-linear-to-br from-blue-400 to-primary text-white shadow-blue-200"
           )}
         >
           {isListening ? (
@@ -192,7 +224,14 @@ export function VoiceInterface({
             <Mic className="h-8 w-8" />
           )}
         </button>
+        <button
+          onClick={onClose}
+          className="h-14 w-14 rounded-full bg-white shadow-lg border border-gray-100 flex items-center justify-center text-gray-500 hover:text-blue-600 hover:scale-110 transition-all duration-300"
+          title="Close"
+        >
+          <X className="h-5 w-5" />
+        </button>
       </div>
-    </>
+    </div>
   );
 }
