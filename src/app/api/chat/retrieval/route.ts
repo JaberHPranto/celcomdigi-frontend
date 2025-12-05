@@ -57,13 +57,15 @@ export async function POST(request: NextRequest) {
     // Generate query embedding
     const queryEmbedding = await embeddingService.embedQuery(query);
 
-    // Search for similar documents
-    const results = await vectorStore.similaritySearch(queryEmbedding, k);
+    // Search for similar documents using hybrid search for better results
+    const results = await vectorStore.hybridSearch(queryEmbedding, query, k);
 
     // Format results
     const formattedResults = results.map((result, idx) => ({
       rank: idx + 1,
       similarity: result.similarity,
+      originalSimilarity: result.originalSimilarity,
+      boost: result.boost,
       category: result.metadata.category,
       url: result.metadata.url,
       contentMarkdown: result.content,

@@ -42,8 +42,12 @@ export async function GET() {
         // Generate query embedding
         const queryEmbedding = await embeddingService.embedQuery(query);
 
-        // Search for similar documents
-        const results = await vectorStore.similaritySearch(queryEmbedding, 3);
+        // Search for similar documents using hybrid search
+        const results = await vectorStore.hybridSearch(
+          queryEmbedding,
+          query,
+          3
+        );
 
         if (results.length === 0) {
           console.log("No results found.");
@@ -61,6 +65,8 @@ export async function GET() {
             queryResults.results.push({
               rank: idx + 1,
               similarity: result.similarity,
+              originalSimilarity: result.originalSimilarity,
+              boost: result.boost,
               category: result.metadata.category,
               url: result.metadata.url,
               contentMarkdown: result.content,
