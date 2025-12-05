@@ -59,16 +59,16 @@ export async function POST(request: NextRequest) {
 
     // Search for similar documents using hybrid search for better results
     const results = await vectorStore.hybridSearch(queryEmbedding, query, k);
-    console.log("🚀 ~ results:", results);
 
     // Format results
     const formattedResults = results.map((result, idx) => ({
       rank: idx + 1,
-      similarity: result.similarity,
+      similarity: result.originalSimilarity,
       originalSimilarity: result.originalSimilarity,
       boost: result.boost,
       category: result.metadata.category,
       url: result.metadata.url,
+      sectionIds: result.metadata.section_ids || [],
       contentMarkdown: result.content,
       contentPlainText: markdownToPlainText(result.content),
     }));
@@ -80,19 +80,22 @@ export async function POST(request: NextRequest) {
           process.env.GEMINI_API_KEY!
         );
 
-        // Transform all results
+        // Transform all results with section IDs
         const transformations = await Promise.all(
           results.map((result) =>
             aiTransformer.transform(query, result.content, {
               url: result.metadata.url,
               category: result.metadata.category,
+              sectionIds: result.metadata.section_ids || [],
             })
           )
         );
 
-        // Add AI answers to formatted results
+        // Add AI answers and targetUrl to formatted results
         formattedResults.forEach((result, idx) => {
           (result as any).aiAnswer = transformations[idx].humanFriendlyAnswer;
+          (result as any).targetUrl = transformations[idx].targetUrl;
+          (result as any).bestSection = transformations[idx].bestSection;
         });
       } catch (aiError) {
         console.error("AI transformation error:", aiError);

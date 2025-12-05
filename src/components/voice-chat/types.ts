@@ -1,5 +1,5 @@
 export const HISTORY_CHIPS = [
-  "What 5G plans are available?",
+  "What is the cheapest prepaid plan with unlimited calls?",
   "Does the SpeedSTREAM plan include Netflix?",
   "Can you tell me about the Home Fibre plan? ",
   "What roaming options do I have for my postpaid plan?",
@@ -26,7 +26,18 @@ export interface ChatInterfaceProps {
   onClose: () => void;
 }
 
+export interface AssistantMessageContent {
+  category: string;
+  similarity: number;
+  url?: string;
+  targetUrl?: string;
+  bestSection?: string | null;
+  sectionIds?: string[];
+  contentPlainText?: string;
+  aiAnswer?: string;
+}
+
 export interface Message {
   role: "user" | "assistant";
-  content: any;
+  content: string | AssistantMessageContent;
 }

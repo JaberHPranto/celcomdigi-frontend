@@ -11,7 +11,12 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { ChatInterfaceProps, HISTORY_CHIPS, Message } from "./types";
+import {
+  AssistantMessageContent,
+  ChatInterfaceProps,
+  HISTORY_CHIPS,
+  Message,
+} from "./types";
 
 export function ChatInterface({ onBack, onClose }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -111,7 +116,7 @@ export function ChatInterface({ onBack, onClose }: ChatInterfaceProps) {
           <h2 className="text-sm font-bold text-gray-900">
             CelcomDigi Assistant
           </h2>
-          <span className="text-[10px] text-green-600 font-medium flex items-center gap-1">
+          <span className="text-[10px] text-green-600 font-medium flex items-center gap-1 mt-0.5">
             <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
             Online
           </span>
@@ -163,87 +168,107 @@ export function ChatInterface({ onBack, onClose }: ChatInterfaceProps) {
           </div>
         ) : (
           <div className="space-y-6 pb-4">
-            {messages.map((msg, idx) => (
-              <div
-                key={idx}
-                className={cn(
-                  "flex animate-in fade-in slide-in-from-bottom-2 duration-300",
-                  msg.role === "user" ? "justify-end" : "justify-start"
-                )}
-              >
+            {messages.map((msg, idx) => {
+              // Type guard for assistant messages
+              const isAssistant = msg.role === "assistant";
+              const content = isAssistant
+                ? (msg.content as AssistantMessageContent)
+                : null;
+
+              return (
                 <div
+                  key={idx}
                   className={cn(
-                    "max-w-[85%] rounded-2xl p-4 shadow-sm",
-                    msg.role === "user"
-                      ? "bg-linear-to-br from-blue-600 to-indigo-600 text-white rounded-br-none"
-                      : "bg-white rounded-bl-none border border-gray-100"
+                    "flex animate-in fade-in slide-in-from-bottom-2 duration-300",
+                    msg.role === "user" ? "justify-end" : "justify-start"
                   )}
                 >
-                  {msg.role === "user" ? (
-                    <p className="leading-relaxed">{msg.content}</p>
-                  ) : (
-                    <div className="space-y-3">
-                      {/* Render AI Response */}
-                      <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
-                        <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-medium capitalize border border-blue-100">
-                          {msg.content.category}
-                        </span>
-                        {msg.content.similarity > 0 && (
-                          <span className="text-gray-400">
-                            • {Math.round(msg.content.similarity * 100)}% match
+                  <div
+                    className={cn(
+                      "max-w-[85%] rounded-2xl p-4 shadow-sm",
+                      msg.role === "user"
+                        ? "bg-linear-to-br from-blue-600 to-indigo-600 text-white rounded-br-none"
+                        : "bg-white rounded-bl-none border border-gray-100"
+                    )}
+                  >
+                    {msg.role === "user" ? (
+                      <p className="leading-relaxed">{msg.content as string}</p>
+                    ) : content ? (
+                      <div className="space-y-3">
+                        {/* Render AI Response */}
+                        <div className="flex items-center gap-2 text-xs text-gray-500 mb-1 flex-wrap">
+                          <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-medium capitalize border border-blue-100">
+                            {content.category}
                           </span>
-                        )}
-                      </div>
+                          {content.bestSection && (
+                            <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-medium border border-emerald-100">
+                              #{content.bestSection}
+                            </span>
+                          )}
+                          {content.similarity > 0 && (
+                            <span className="text-gray-400">
+                              • {Math.round(content.similarity * 100)}% match
+                            </span>
+                          )}
+                        </div>
 
-                      <div className="text-gray-700 mt-3">
-                        {msg.content.aiAnswer ? (
-                          <div
-                            className="text-gray-600 leading-relaxed wrap-break-word prose-sm"
-                            dangerouslySetInnerHTML={{
-                              __html: msg.content.aiAnswer
-                                .replace(
-                                  /\*\*(.*?)\*\*/g,
-                                  "<strong class='font-semibold text-blue-600'>$1</strong>"
-                                )
-                                .replace(/\n/g, "<br/>"),
-                            }}
-                          />
-                        ) : msg.content.contentPlainText ? (
-                          <p>{msg.content.contentPlainText}</p>
-                        ) : (
-                          <p className="text-red-700 italic text-sm">
-                            Failed to generate AI response
-                          </p>
-                        )}
+                        <div className="text-gray-700 mt-3">
+                          {content.aiAnswer ? (
+                            <div
+                              className="text-gray-600 leading-relaxed wrap-break-word prose-sm"
+                              dangerouslySetInnerHTML={{
+                                __html: content.aiAnswer
+                                  .replace(
+                                    /\*\*(.*?)\*\*/g,
+                                    "<strong class='font-semibold text-blue-600'>$1</strong>"
+                                  )
+                                  .replace(/\n/g, "<br/>"),
+                              }}
+                            />
+                          ) : content.contentPlainText ? (
+                            <p>{content.contentPlainText}</p>
+                          ) : (
+                            <p className="text-red-700 italic text-sm">
+                              Failed to generate AI response
+                            </p>
+                          )}
 
-                        {msg.content.url && (
-                          <div className="mt-4 pt-3 border-t border-gray-100">
-                            <a
-                              href={msg.content.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center justify-between w-full p-3 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all group border border-blue-100 hover:border-blue-200 hover:shadow-sm"
-                            >
-                              <div className="flex flex-col items-start overflow-hidden">
-                                <span className="text-[10px] font-bold text-blue-500 uppercase tracking-wider">
-                                  Source
-                                </span>
-                                <span className="mt-0.5 text-sm font-semibold text-blue-900 group-hover:text-blue-800 truncate w-full">
-                                  View full details
-                                </span>
-                              </div>
-                              <div className="h-8 w-8 bg-white rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform shrink-0 ml-3">
-                                <ArrowUpRight className="h-4 w-4 text-blue-600" />
-                              </div>
-                            </a>
-                          </div>
-                        )}
+                          {(content.targetUrl || content.url) && (
+                            <div className="mt-4 pt-3 border-t border-gray-100">
+                              <a
+                                href={content.targetUrl || content.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center justify-between w-full p-3 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all group border border-blue-100 hover:border-blue-200 hover:shadow-sm"
+                              >
+                                <div className="flex flex-col items-start overflow-hidden">
+                                  <span className="text-[10px] font-bold text-blue-500 uppercase tracking-wider">
+                                    {content.bestSection
+                                      ? "Jump to Section"
+                                      : "Source"}
+                                  </span>
+                                  <span className="mt-0.5 text-sm font-semibold text-blue-900 group-hover:text-blue-800 truncate w-full">
+                                    {content.bestSection
+                                      ? `View ${content.bestSection.replace(
+                                          /-/g,
+                                          " "
+                                        )}`
+                                      : "View full details"}
+                                  </span>
+                                </div>
+                                <div className="h-8 w-8 bg-white rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform shrink-0 ml-3">
+                                  <ArrowUpRight className="h-4 w-4 text-blue-600" />
+                                </div>
+                              </a>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    ) : null}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
 
             {isLoading && (
               <div className="flex justify-start animate-in fade-in slide-in-from-bottom-2">

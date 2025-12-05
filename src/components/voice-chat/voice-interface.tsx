@@ -66,19 +66,42 @@ export function VoiceInterface({
             }}
           >
             {/* Core gradient */}
-            <div
-              className={cn(
-                "absolute inset-0 rounded-full bg-linear-to-br from-blue-400 via-purple-500 to-indigo-600 opacity-80 blur-xl",
-                isListening ? "animate-pulse" : "opacity-40"
-              )}
-            />
+            <>
+              <div
+                className={cn(
+                  "absolute inset-0 rounded-full pointer-events-none transition-opacity duration-300",
+                  isListening ? "opacity-95" : "opacity-70"
+                )}
+                style={{
+                  background:
+                    "radial-gradient(circle at 30% 30%, rgba(191,219,254,0.95) 0%, rgba(99,102,241,0.36) 30%, rgba(59,130,246,0.12) 60%)",
+                  filter: "blur(18px)",
+                  boxShadow:
+                    "0 12px 50px rgba(59,130,246,0.20), 0 0 60px rgba(99,102,241,0.08)",
+                }}
+              />
+
+              {/* Inner subtle glow / sheen */}
+              <div
+                className={cn(
+                  "absolute inset-3 rounded-full pointer-events-none transition-opacity duration-300",
+                  isListening ? "opacity-100" : "opacity-80"
+                )}
+                style={{
+                  background:
+                    "conic-gradient(from 200deg at 50% 50%, rgba(255,255,255,0.12), rgba(255,255,255,0.04), rgba(255,255,255,0))",
+                  boxShadow: "inset 0 6px 18px rgba(255,255,255,0.06)",
+                  mixBlendMode: "screen",
+                }}
+              />
+            </>
 
             {/* Inner texture simulation */}
             <div
-              className="absolute inset-2 rounded-full bg-linear-to-tr from-blue-300 via-indigo-400 to-purple-400 opacity-90 shadow-inner animate-[spin_20s_linear_infinite]"
+              className="absolute inset-2 rounded-full bg-linear-to-tr from-blue-300 via-blue-400 to-blue-500 opacity-90 shadow-inner animate-[spin_20s_linear_infinite]"
               style={{
                 background:
-                  "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8) 0%, rgba(100,100,255,0) 20%), conic-gradient(from 0deg, #a5b4fc, #818cf8, #6366f1, #a5b4fc)",
+                  "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8) 0%, rgba(100,150,255,0) 20%), conic-gradient(from 0deg, #bfdbfe, #60a5fa, #3b82f6, #bfdbfe)",
               }}
             >
               <div
@@ -120,9 +143,9 @@ export function VoiceInterface({
         )}
 
         {/* Text and Captions */}
-        <div className="space-y-6 relative z-10 min-h-[120px]  w-full px-6">
+        <div className="space-y-6 relative z-10 min-h-[120px] w-full px-6">
           {!userCaption && !aiCaption && !toolAction && !capturedImage && (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
               <h3 className="text-2xl font-semibold text-gray-900 mb-2">
                 How can I help you?
               </h3>
