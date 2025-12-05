@@ -475,3 +475,21 @@ h6 {
     transform: translate3d(-6%, -6%, 0) rotate(-4deg);
   }
 }
+
+@keyframes loading {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-150%) rotate(45deg);
+  }
+  100% {
+    transform: translateX(150%) rotate(45deg);
+  }
+}

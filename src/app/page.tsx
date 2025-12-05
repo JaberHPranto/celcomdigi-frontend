@@ -11,6 +11,7 @@ import { ServicesGrid } from "@/components/sections/services-grid";
 import { SpotlightBanner } from "@/components/sections/spotlight-banner";
 import { SpotlightGrid } from "@/components/sections/spotlight-grid";
 import { VideoSpotlight } from "@/components/sections/video-spotlight";
+import { ToolActionVisuals } from "@/components/voice-chat/tool-action-visuals";
 import { easy360Products, megaJimatProducts } from "@/data/site-content";
 
 export default function Home() {

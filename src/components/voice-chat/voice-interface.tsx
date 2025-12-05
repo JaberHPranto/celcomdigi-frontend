@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { ChevronLeft, Keyboard, Mic, MicOff, X } from "lucide-react";
+import { ChevronLeft, Keyboard, Mic, MicOff, X, Crop } from "lucide-react";
 import { VoiceInterfaceProps } from "./types";
 import { ToolActionVisuals } from "./tool-action-visuals";
 
@@ -23,59 +23,47 @@ export function VoiceInterface({
   return (
     <>
       {/* Header */}
-      <div className="flex items-center justify-between p-6">
+      <div className="flex items-center justify-between p-6 relative z-10">
         <button
           onClick={onClose}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200"
+          className="flex h-12 w-12 items-center justify-center rounded-full bg-white/80 backdrop-blur-md text-gray-600 shadow-sm border border-gray-100 transition-all hover:bg-white hover:shadow-md hover:scale-105 active:scale-95"
         >
-          <ChevronLeft className="h-5 w-5" />
+          <ChevronLeft className="h-6 w-6" />
         </button>
-        <h2 className="text-lg font-semibold text-gray-900">Voice chat</h2>
+
+        <div className="px-4 py-1.5 bg-white/50 backdrop-blur-sm rounded-full border border-white/20 shadow-sm">
+          <h2 className="text-sm font-semibold text-gray-600 tracking-wide uppercase">
+            Voice Assistant
+          </h2>
+        </div>
 
         {/* Screen Capture button */}
         <button
           onClick={onStartCapture}
           className={cn(
-            "flex h-12 w-12 items-center justify-center rounded-full transition-colors",
+            "flex h-12 w-12 items-center justify-center rounded-full transition-all shadow-sm border border-transparent hover:scale-105 active:scale-95",
             capturedImage
-              ? "bg-blue-100 text-blue-600 hover:bg-blue-200"
-              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              ? "bg-blue-100 text-blue-600 border-blue-200 shadow-blue-100"
+              : "bg-white/80 backdrop-blur-md text-gray-600 border-gray-100 hover:bg-white hover:shadow-md"
           )}
           title="Capture screen region"
         >
-          <div>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-              <path d="M7 19a2 2 0 0 1 -2 -2" />
-              <path d="M5 13v-2" />
-              <path d="M5 7a2 2 0 0 1 2 -2" />
-              <path d="M11 5h2" />
-              <path d="M17 5a2 2 0 0 1 2 2" />
-              <path d="M19 11v2" />
-              <path d="M19 17v4" />
-              <path d="M21 19h-4" />
-              <path d="M13 19h-2" />
-            </svg>
-          </div>
+          <Crop className="h-5 w-5" />
         </button>
       </div>
 
       {/* Main Content */}
-      <div className="flex flex-1 flex-col items-center justify-center px-8 text-center">
+      <div className="flex flex-1 flex-col items-center justify-center px-8 text-center relative">
+        {/* Background Ambient Glow */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-400/10 rounded-full blur-3xl animate-pulse [animation-delay:1s]" />
+        </div>
+
         {/* Captured Image Preview */}
         {capturedImage && (
-          <div className="mb-6 relative group">
-            <div className="rounded-xl overflow-hidden border-2 border-blue-200 shadow-lg max-w-[280px]">
+          <div className="mb-8 relative group animate-in fade-in zoom-in-95 duration-300">
+            <div className="rounded-2xl overflow-hidden border-4 border-white shadow-2xl max-w-[280px] rotate-2 transition-transform group-hover:rotate-0">
               <img
                 src={capturedImage}
                 alt="Captured region"
@@ -84,135 +72,115 @@ export function VoiceInterface({
             </div>
             <button
               onClick={onClearCapture}
-              className="absolute -top-2 -right-2 h-6 w-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
+              className="absolute -top-3 -right-3 h-8 w-8 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 transition-all hover:scale-110"
               title="Remove captured image"
             >
-              <X className="h-3 w-3" />
+              <X className="h-4 w-4" />
             </button>
-            <p className="text-xs text-blue-600 mt-2 font-medium">
-              ✓ Image captured - Ask me about it!
-            </p>
+            <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap">
+              <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                Image Attached
+              </span>
+            </div>
           </div>
         )}
 
         {/* The Blob Animation */}
-        <div className="relative mb-16 mt-4 flex items-center justify-center">
+        <div className="relative mb-12 mt-4 flex items-center justify-center">
+          {/* Outer rings */}
+          {isListening && (
+            <>
+              <div className="absolute inset-0 rounded-full border border-blue-200 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite]" />
+              <div className="absolute inset-0 rounded-full border border-purple-200 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite] [animation-delay:0.5s]" />
+            </>
+          )}
+
           <div
-            className="relative h-48 w-48 rounded-full transition-transform duration-75 ease-out"
+            className="relative h-56 w-56 transition-all duration-100 ease-out"
             style={{
               transform: isListening
-                ? `scale(${1 + Math.min(volume * 1.5, 0.5)})`
+                ? `scale(${1 + Math.min(volume * 2, 0.4)})`
                 : "scale(1)",
             }}
           >
             {/* Core gradient */}
             <div
               className={cn(
-                "absolute inset-0 rounded-full bg-linear-to-br from-blue-400 via-purple-500 to-indigo-600 opacity-80 blur-xl",
-                isListening ? "animate-pulse" : "opacity-40"
+                "absolute inset-0 rounded-full bg-linear-to-br from-blue-500 via-indigo-500 to-purple-600 blur-xl transition-opacity duration-500",
+                isListening ? "opacity-60" : "opacity-30"
               )}
             />
 
-            {/* Inner texture simulation */}
-            <div
-              className="absolute inset-2 rounded-full bg-linear-to-tr from-blue-300 via-indigo-400 to-purple-400 opacity-90 shadow-inner"
-              style={{
-                background:
-                  "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8) 0%, rgba(100,100,255,0) 20%), conic-gradient(from 0deg, #a5b4fc, #818cf8, #6366f1, #a5b4fc)",
-              }}
-            >
-              <div
-                className={cn(
-                  "absolute inset-0 rounded-full bg-white/20 backdrop-blur-sm",
-                  isListening ? "animate-[spin_8s_linear_infinite]" : ""
-                )}
-              />
-            </div>
+            {/* Main Orb */}
+            <div className="absolute inset-4 rounded-full bg-linear-to-tr from-blue-400 via-indigo-500 to-purple-500 shadow-2xl overflow-hidden">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.4),transparent)]" />
+              <div className="absolute inset-0 bg-[conic-gradient(from_0deg,transparent,rgba(255,255,255,0.2),transparent)] animate-[spin_4s_linear_infinite]" />
 
-            {/* Shine effect */}
-            <div className="absolute top-4 left-8 h-12 w-20 -rotate-45 rounded-full bg-linear-to-b from-white/60 to-transparent blur-md" />
+              {/* Inner fluid effect */}
+              <div className="absolute inset-0 opacity-50 mix-blend-overlay">
+                <div className="absolute -inset-full bg-linear-to-r from-transparent via-white/30 to-transparent rotate-45 animate-[shimmer_3s_infinite]" />
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Text and Captions */}
-        <div className="space-y-4">
-          <p className="text-xl font-medium leading-relaxed text-gray-800">
-            "Hello 👋 I can help you answer questions related to{" "}
-            <strong>CelcomDigi</strong> <br />
-            Ask me anything!"
-          </p>
+        <div className="space-y-6 max-w-lg relative z-10 min-h-[120px]">
+          {!userCaption && !aiCaption && !toolAction && (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+              <h3 className="text-2xl font-semibold text-gray-900 mb-2">
+                How can I help you?
+              </h3>
+              <p className="text-gray-500">
+                Ask about plans, coverage, or troubleshooting.
+              </p>
+            </div>
+          )}
 
-          <p
-            className={cn(
-              "text-sm font-medium mb-3",
-              error
-                ? "text-red-500"
-                : isListening
-                ? "text-blue-600 animate-pulse"
-                : "text-gray-500"
-            )}
-          >
-            {error
-              ? error
-              : isListening
-              ? "Listening..."
-              : "Tap microphone to start"}
-          </p>
-
-          {/* Live Caption Display */}
-          {(userCaption || aiCaption) && (
-            <div className="my-6 max-w-md mx-auto space-y-3">
-              {/* User Caption */}
+          {/* Live Captions */}
+          {(userCaption || aiCaption) && !toolAction && (
+            <div className="space-y-4">
               {userCaption && (
-                <div className="rounded-2xl bg-gray-100 p-4 shadow-sm border border-gray-200">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-medium text-gray-500">
-                      You
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-700 leading-relaxed">
-                    {userCaption}
-                  </p>
-                </div>
+                <p className="text-xl font-medium text-gray-600 animate-in fade-in slide-in-from-bottom-2">
+                  "{userCaption}"
+                </p>
               )}
-
-              {/* AI Caption */}
               {aiCaption && (
-                <div className="rounded-2xl bg-linear-to-br from-blue-50 to-indigo-50 p-4 shadow-sm border border-blue-100">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-medium text-blue-600">
-                      AI
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-700 leading-relaxed">
-                    {aiCaption}
-                  </p>
-                </div>
+                <p className="text-xl font-medium text-blue-600 animate-in fade-in slide-in-from-bottom-2">
+                  {aiCaption}
+                </p>
               )}
             </div>
           )}
 
           {/* Tool Action Visuals */}
-          <ToolActionVisuals toolAction={toolAction} />
+          <div className="w-full">
+            <ToolActionVisuals toolAction={toolAction} />
+          </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-sm font-medium animate-in fade-in slide-in-from-bottom-2 inline-block">
+              {error}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Footer Controls */}
-      <div className="mb-8 flex items-center justify-center gap-4 px-6 pb-6">
-        {/* Keyboard / Chat button */}
+      <div className="p-8 flex items-center justify-center gap-6 relative z-10">
         <button
           onClick={onSwitchToChat}
-          className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200"
-          title="Switch to chat"
+          className="h-14 w-14 rounded-full bg-white shadow-lg border border-gray-100 flex items-center justify-center text-gray-500 hover:text-blue-600 hover:scale-110 transition-all duration-300"
+          title="Switch to keyboard"
         >
-          <Keyboard className="h-5 w-5" />
+          <Keyboard className="h-6 w-6" />
         </button>
 
-        {/* Main Mic button */}
         <button
           onClick={onToggleListening}
           className={cn(
-            "flex h-20 w-20 items-center justify-center rounded-full shadow-lg transition-all duration-300 hover:scale-105 active:scale-95",
+            "h-20 w-20 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95",
             isListening
               ? "bg-red-500 text-white shadow-red-200 animate-pulse"
               : "bg-blue-600 text-white shadow-blue-200"
@@ -223,15 +191,6 @@ export function VoiceInterface({
           ) : (
             <Mic className="h-8 w-8" />
           )}
-        </button>
-
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200"
-          title="Close"
-        >
-          <X className="h-5 w-5" />
         </button>
       </div>
     </>
